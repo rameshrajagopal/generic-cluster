@@ -1,25 +1,19 @@
-#ifndef __HTTP2_SERVER_H_INCLUDED__
-#define __HTTP2_SERVER_H_INCLUDED__
+#ifndef __SERVER_H_INCLUDED__
+#define __SERVER_H_INCLUDED__
 
-using request_dispatch_cb  = std::function<void (int reqid, Buffer & request)>;
-
-typedef struct {
-    shared_ptr<Stream> st;
-    shared_ptr<Buffer> buffer;
-}RequestMeta;
+using request_dispatch_cb  = std::function<void (shared_ptr<Handle> handle, shared_ptr<Buffer> request, const HeaderMap & h)>;
 
 typedef struct {
     string path;
     request_dispatch_cb request_cb;
 }EpHandler
 
-class ServerIf {
-    virtual void run();
-    virtual int submit_response(int reqid, int response_code, Buffer & response) = 0;
-};
-
-class Http2Server: ServerIf {
-     Http2Server(const HostInfo & host, vector<EpHandler> & handlers) {
+class Server {
+     Server(const HostInfo & host, vector<EpHandler> & handlers);
+     void set_response_timeout(uint32_t timeout);
+     void set_num_io_threads(uint32_t num_threads);
+#if 0
+     Server(const HostInfo & host, vector<EpHandler> & handlers) {
         //register the handle
          for each handlers {
              for each request {
@@ -37,20 +31,20 @@ class Http2Server: ServerIf {
              }
          }
      }
-     void run() {
-     }
-     int submit_response(int reqid, int response_code, Buffer & response) {
+#endif
+     void run();
+     int submit_response(shared_ptr<Handle> handle,  int response_code, Buffer & response);
+     //{
          //findout stream entry using reqid
          //if the req is not closed 
          //post the response into io_service
-         return 0;
-     }
+     //}
 private:
      HostInfo host;
      vector<EpHandler> handlers;
-     map<uint64_t, RequestMeta> req_map;
-     atomic_t<uint64_t> req_id;
+     uint32_t timeout;
+     uint32_t num_threads;
 };
 
 
-#endif /*__HTTP2_SERVER_H_INCLUDED__*/
+#endif /*__SERVER_H_INCLUDED__*/

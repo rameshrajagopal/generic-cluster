@@ -1,30 +1,17 @@
 #ifndef __SLAVE_H_INCLUDED__
 #define __SLAVE_H_INCLUDED__
 
-class SlaveIf {
-public:
-    virtual bool get_status();
-    virtual void init();
-};
-
-class Slave: SlaveIf {
-    Slave(const HostInfo & host) {
-        //register handler for on_status 
+class Slave {
+    Slave(const HostInfo & master, const HostInfo & host) {
     }
-    void stauts_check_cb(uint64_t reqid, Buffer & request) {
-        //call the current objects' get status method and 
-        //return the status
-        //server.submit_response(reqid, int errorcode, Buffer & response);
-    }
-    bool get_status() {
-
-    }
-    void init() {
-    }
-protected:
-    Http2Server server;
+    void status_check_cb(shared_ptr<Handle> handle, shared_ptr<Buffer> request, const HeaderMap & h);
+    bool get_status();
+    void init();
+    void submit_response(shared_ptr<Handle> handle, int res_code, Buffer & response);
+private:
+    HostSession master_sess;
     HostInfo host;
-    atomic_t<bool> initialized {false};
+    Server server;
 };
 
 #endif /*__SLAVE_H_INCLUDED__*/

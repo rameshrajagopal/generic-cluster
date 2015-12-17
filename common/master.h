@@ -1,35 +1,29 @@
 #ifndef __MASTER_H_INCLUDED__
 #define __MASTER_H_INCLUDED__
 
-class MasterIf {
-public:
-    MasterIf(const HostInfo & master, vector<HostInfo> & slaves);
-    bool get_host_status(const HostInfo & host);
-    void add_host(const HostInfo & host);
-    void remove_host(const HostInfo & host); 
-    void register_node_listener(health_monitor_cb cb);
-    void register_slave_listener(health_monitor_cb cb);
-    void init() {
-        //will start the node pinger 
-        //will start the slave pinger
-    }
-    virtual bool get_status(); 
-protected:
-    NodePinger  node_pinger;
-    SlavePinger slave_pinger;
-    vector<HostInfo> _slaves;
-};
+#include <health_monitor.h>
+#include <host_info.h>
+#include <host_session.h>
 
-class Master: MasterIf {
+class Master {
+public:
     Master(const HostInfo & master, vector<HostInfo> & slaves);
-    void start() {
-    }
-    bool get_status() {
-        //incase of sherlock elb, we can start the listener on this call 
-        //to make the service is available
-    }
+    void init();
+    void slave_register(const HostInfo & slave);
+    void slave_set_state(const HostInfo & slave, Status status);
+    /* peer is master secondary */
+    void peer_register(const HostInfo & slave);
+    void peer_set_state(const HostInfo & peer, Status status);
+    bool get_status(); 
+    void submit_response(shared_ptr<Handle> handle, int res_code, Buffer & response);
+    void submit_slave_request(shared_ptr<Handle> handle, const string & uri, const Buffer & request, response_dispatch_cb res_cb);
+    void host_monitor_cb(const HostInfo & host, Status status);
+    void register_request_cb(shared_ptr<Handle> handle, shared_ptr<Buffer> request, const HeaderMap &h);
 private:
-    void node_status_monitor(const HostInfo & host, HostStatus & status);
+    Http2Server server;
+    vector<HostSession> slave_sessions;
+    vector<HostSession> peer_sessions;
+    HealthMonitor health_monitor;
 };
 
 
