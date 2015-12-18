@@ -6,21 +6,12 @@
 #include <nghttp2/asio_http2.h>
 #include <mutex>
 #include <cstdlib>
+#include <buffer.h>
 
 using namespace std;
 using namespace nghttp2::asio_http2;
 using namespace nghttp2::asio_http2::server;
 
-//has 4k buffer allocation on demand
-class Buffer {
-public:
-      Buffer() {};
-      uint32_t get(uint8_t ** buf);
-      void put(uint8_t * buf, uint32_t len);
-private:
-      size_t offset;
-      vector<uint8_t *> buffers;
-};
 using HeaderMap = header_map;
 
 class RequestMeta: public std::enable_shared_from_this<RequestMeta> {

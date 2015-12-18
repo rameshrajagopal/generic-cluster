@@ -20,7 +20,7 @@ public:
     void host_monitor_cb(const HostInfo & host, Status status);
     void register_request_cb(shared_ptr<Handle> handle, shared_ptr<Buffer> request, const HeaderMap &h);
 private:
-    Http2Server server;
+    Server server;
     vector<HostSession> slave_sessions;
     vector<HostSession> peer_sessions;
     HealthMonitor health_monitor;
