@@ -1,7 +1,8 @@
 #ifndef __SERVER_H_INCLUDED__
 #define __SERVER_H_INCLUDED__
 
-using request_dispatch_cb  = std::function<void (shared_ptr<Handle> handle, shared_ptr<Buffer> request, const HeaderMap & h)>;
+using request_dispatch_cb  = std::function<
+             void (shared_ptr<Handle> handle, unique_ptr<Buffer> request, const HeaderMap & h)>;
 
 typedef struct {
     string path;
@@ -33,7 +34,7 @@ class Server {
      }
 #endif
      void run();
-     int submit_response(shared_ptr<Handle> handle,  int response_code, Buffer & response);
+     int submit_response(shared_ptr<Handle> handle,  int response_code, unique_ptr<Buffer<uint8_t>> res);
      //{
          //findout stream entry using reqid
          //if the req is not closed 

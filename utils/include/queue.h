@@ -23,6 +23,17 @@ class Queue
     mlock.unlock();
     return item;
   }
+  void pop(T & item)
+  {
+    std::unique_lock<std::mutex> mlock(mutex_);
+    while (queue_.empty())
+    {
+      cond_.wait(mlock);
+    }
+    item = queue_.front();
+    queue_.pop();
+    mlock.unlock();
+  }
 
   bool is_empty()
   {

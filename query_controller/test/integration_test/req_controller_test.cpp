@@ -1,12 +1,16 @@
-#define GTEST_HAS_TR1_TUPLE 0
-#include "gtest/gtest.h"
-
 #include "../include/query_controller.h"
+#include <iostream>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <cstdlib>
+#include <string.h>
 
-TEST(RequestControllerTest, createReqControllerBasicTest) {
+using namespace std;
+#define EXPECT_EQ(x, y) (x) == (y) ? (cout << "PASS" << endl) : (cout << "FAIL" << endl)
+
+int main(void) 
+{
     int req_num = 10;
     int req_size = 1024;
     int res_size = 512;
@@ -24,7 +28,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
         (shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> req, unique_ptr<HeaderMap> h) -> int {
           uint8_t * req_buf = nullptr;
           int size = req->get(req_buf); 
-          cout << "received request ";
+          cout << "received request: ";
           cout << static_cast<int *>(handle.get());
           cout << size << " " << static_cast<void *>(h.get()) << endl;
           EXPECT_EQ(size, req_size);
@@ -37,7 +41,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
     response_process_cb response_cb = [res_size, &res_source, &_cond, &has_result_come] 
         (shared_ptr<Handle> handle, int res_code, unique_ptr<Buffer<uint8_t>> res) {
              uint8_t * res_buf = nullptr;
-             cout << "received response: ";
+             cout << "received response ";
              int size = res->get(res_buf);
              cout << static_cast<int *>(handle.get()) << endl;
              EXPECT_EQ(size, res_size);
@@ -73,5 +77,4 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
     }
     mlock.unlock();
 }
-
 

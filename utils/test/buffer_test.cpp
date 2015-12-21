@@ -8,46 +8,62 @@ using namespace std;
 
 TEST(BufferTest, bufferTestLenZero) {
     Buffer<uint8_t> buffer(16);
-    unique_ptr<uint8_t> buf;
+    uint8_t * buf;
     EXPECT_EQ(buffer.get(buf), 0);
+}
+
+int  buffer_processing(Buffer<uint8_t> && buffer)
+{
+    uint8_t * buf;
+    int num_buffers = 0;
+
+    while ((buffer.get(buf)) != 0) {
+        ++num_buffers;
+    }
+    return num_buffers;
 }
 
 TEST(BufferTest, bufferTestCount) {
     Buffer<uint8_t> buffer(1024);
-    unique_ptr<uint8_t> buf;
-
     size_t len = 1024;
     uint8_t source[len];
-    buffer.put(source, len);
 
+    buffer.put(source, len);
+    EXPECT_EQ(buffer_processing(std::move(buffer)), 1);
+}
+
+int  buffer_move_verify(unique_ptr<Buffer<uint8_t>> buffer)
+{
+    uint8_t * buf;
     int num_buffers = 0;
-    while ((buffer.get(buf)) != 0) {
+
+    while ((buffer->get(buf)) != 0) {
         ++num_buffers;
     }
-    EXPECT_EQ(num_buffers, 1);
+    return num_buffers;
 }
 
 TEST(BufferTest, twoBufsTestCount) {
-    Buffer<uint8_t> buffer(1024);
-    unique_ptr<uint8_t> buf;
+    std::unique_ptr<Buffer<uint8_t>> buffer(new Buffer<uint8_t>(1024));
+    uint8_t * buf;
 
     size_t len = 1024;
     uint8_t source[len];
-    buffer.put(source, len);
-    buffer.put(source, 1);
+    buffer->put(source, len);
+    buffer->put(source, 1);
     int num_buffers = 0;
     size_t ret_len = 0;
-    while ((ret_len = buffer.get(buf)) != 0) {
+    while ((ret_len = buffer->get(buf)) != 0) {
         ++num_buffers;
         if (ret_len < len) break;
     }
-    EXPECT_EQ(num_buffers, 2);
+    EXPECT_EQ(buffer_move_verify(std::move(buffer)), 0);
     EXPECT_EQ(ret_len, 1);
 }
 
 TEST(BufferTest, bufferCleanupCountTest) {
     Buffer<uint8_t> buffer(1024);
-    unique_ptr<uint8_t> buf;
+    uint8_t * buf;
 
     size_t len = 1024;
     uint8_t source[len];
@@ -59,6 +75,7 @@ TEST(BufferTest, bufferCleanupCountTest) {
     }
     EXPECT_EQ(buffer.get_num_buffers(), 0);
 }
+
 
 TEST(BufferTest, bufferBoundaryConditionsTest) {
     Buffer<uint8_t> buffer(2000);
@@ -78,13 +95,13 @@ TEST(BufferTest, bufferBoundaryConditionsTest) {
         ++i;
     }
     EXPECT_EQ(buffer.get_num_buffers(), 2);
-    unique_ptr<uint8_t> dest;
+    uint8_t * dest;
     size_t ret_len = 0;
     i = 0;
     while ((ret_len = buffer.get(dest)) != 0) {
         memset(source, 'a' + i, sizeof(source));
         EXPECT_EQ(ret_len, 2000);
-        EXPECT_EQ(memcmp(source, dest.get(), ret_len), 0);
+        EXPECT_EQ(memcmp(source, dest, ret_len), 0);
         ++i;
     }
 }
@@ -108,7 +125,7 @@ TEST(BufferTest, bufferBoundaryConditionsNumbuffersTest) {
     num_buffers = (num_buffers * 176)/buf_size;
     if (((num_buffers * 176) % buf_size) != 0) ++num_buffers;
     EXPECT_EQ(buffer.get_num_buffers(), num_buffers);
-    unique_ptr<uint8_t> dest;
+    uint8_t * dest;
     size_t ret_len = 0;
     i = 0;
     while ((ret_len = buffer.get(dest)) != 0) {
@@ -134,7 +151,7 @@ TEST(BufferTest, bufferIntegrityTest) {
     if (((num_buffers * chunk_size) % buf_size) != 0) ++num_buffers;
     EXPECT_EQ(buffer.get_num_buffers(), num_buffers);
     /* verify the actual out from buffers */
-    unique_ptr<uint8_t> dest;
+    uint8_t * dest;
     size_t ret_len = 0;
     size_t cnt = 0;
     size_t offset = 0;
@@ -144,7 +161,7 @@ TEST(BufferTest, bufferIntegrityTest) {
         offset = 0;
         while (cnt < (ret_len/chunk_size)) {
             memset(source, 'a' + i, chunk_size);
-            EXPECT_EQ(memcmp(dest.get()+offset, source, chunk_size), 0);
+            EXPECT_EQ(memcmp(dest+offset, source, chunk_size), 0);
             offset += chunk_size;
             ++cnt;
             ++i;
@@ -152,5 +169,131 @@ TEST(BufferTest, bufferIntegrityTest) {
     }
     EXPECT_EQ(i, total_num_chunks);
 }
+
+TEST(BufferTest, bufferSimpleCopyTest) {
+    int buf_size = 256;
+    int num_buffers = 4;
+    Buffer<uint8_t> buffer(buf_size);
+
+    uint8_t source[256];
+    memset(source, 'a', sizeof(source));
+    int i = 0;
+    while (i < num_buffers) {
+        buffer.put(source, buf_size);
+        ++i;
+    }
+    buffer.put(source, 128);
+    ++num_buffers;
+    /* try to copy the data */
+    i = 0;
+    int ret = 0;
+    while (true) {
+        ret = buffer.copy(source, buf_size);
+        ++i;
+        if (ret < buf_size) {
+            break;
+        }
+    }
+    EXPECT_EQ(i, num_buffers);
+}
+
+TEST(BufferTest, bufferCopyPrefixTest) {
+    int buf_size = 2048;
+    int num_buffers = 4;
+    Buffer<uint8_t> buffer(buf_size);
+
+    uint8_t source[buf_size];
+    memset(source, 'a', sizeof(source));
+    int i = 0;
+    while (i < num_buffers) {
+        buffer.put(source, buf_size);
+        ++i;
+    }
+    buffer.put(source, 128);
+    ++num_buffers;
+    /* try to copy the data */
+    i = 0;
+    int ret = 0;
+    buf_size = 1024;
+    while (true) {
+        ret = buffer.copy(source, buf_size);
+        ++i;
+        if (ret < buf_size) {
+            break;
+        }
+    }
+    EXPECT_EQ(i, num_buffers * 2 - 1);
+}
+
+TEST(BufferTest, bufferCopyPostfixTest) {
+    int buf_size = 2048;
+    int num_buffers = 0;
+    Buffer<uint8_t> buffer(buf_size);
+
+    uint8_t source[buf_size];
+    memset(source, 'a', sizeof(source));
+    int i = 0;
+    buffer.put(source, 1024);
+    ++num_buffers;
+    /* try to copy the data */
+    i = 0;
+    int ret = 0;
+    buf_size = 512;
+    while (true) {
+        ret = buffer.copy(source, buf_size);
+        ++i;
+        if (ret < buf_size) {
+            break;
+        }
+    }
+    EXPECT_EQ(i, num_buffers * 2 + 1);
+}
+
+TEST(BufferTest, bufferCopyFullTest) {
+    int buf_size = 2048;
+    int num_buffers = 4;
+    Buffer<uint8_t> buffer(buf_size);
+
+    uint8_t source[buf_size];
+    memset(source, 'a', sizeof(source));
+    int i = 0;
+    while (i < num_buffers) {
+        buffer.put(source, buf_size);
+        ++i;
+    }
+    buffer.put(source, 128);
+    ++num_buffers;
+    /* try to copy the data */
+    i = 0;
+    int ret = 0;
+    buf_size = 1024;
+    ret = buffer.copy(source, buf_size);
+    EXPECT_EQ(ret, buf_size);
+    while (true) {
+        ret = buffer.copy(source, buf_size);
+        ++i;
+        if (ret < buf_size) {
+            break;
+        }
+    }
+    EXPECT_EQ(i, (num_buffers-1) * 2);
+}
+
+TEST(BufferTest, bufferMoveTest) {
+    int buf_size = 2048;
+    int num_buffers = 4;
+    unique_ptr<Buffer<uint8_t>> buffer (new Buffer<uint8_t>(buf_size));
+
+    uint8_t source[buf_size];
+    int i = 0;
+    while (i < num_buffers) {
+        buffer->put(source, buf_size);
+        ++i;
+    }
+    unique_ptr<Buffer<uint8_t>> move_buf(std::move(buffer));
+    EXPECT_EQ(move_buf->get_num_buffers(), num_buffers);
+}
+
+
 
 
