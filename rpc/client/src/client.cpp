@@ -1,22 +1,10 @@
 #include <client.h>
 
-using namespace std;
-using Handle = int;
-using Buffer = std::string;
-using RequestMap = const request *;
-using session_connect_cb = std::function<void (const string & host, const string & port, int ec)>;
-using query_request_callback = std::function<void (shared_ptr<Handle> handle, int res_code, Buffer * response)>;
 
-Client::Client(string h, string p, boost::asio::io_service & ios): 
-        host(h), port(p), ios(ios)
+Client::Client(const HostInfo & h, boost::asio::io_service & ios): 
+        host(h), ios(ios)
 {
-    sess = make_shared<session>(ios, host, port);
-}
-
-Client::~Client() 
-{
-   cout << "Destructor called" << endl;
-   req_map.clear();
+    sess = make_shared<session>(ios, host.name, host.port);
 }
 
 void Client::connect(session_connect_cb client_connect_cb)
@@ -24,23 +12,23 @@ void Client::connect(session_connect_cb client_connect_cb)
     /* we can not access sess out of io service
      * hence post method is needed
      */
-    auto self = shared_from_this();
     ios.post(
-    [self, client_connect_cb]() {
-         self->sess->on_connect([self, client_connect_cb](tcp::resolver::iterator endpoint_it) {
+    [this, client_connect_cb]() {
+         sess->on_connect([this, client_connect_cb](tcp::resolver::iterator endpoint_it) {
              cout << "session connected" << endl;
-             client_connect_cb(self->host, self->port, 0);
+             client_connect_cb(host, 0);
           });
-          self->sess->on_error([self, client_connect_cb](const boost::system::error_code & ec) {
+          sess->on_error([this, client_connect_cb](const boost::system::error_code & ec) {
              cout << "session error " << ec.message() << endl;
              //need to convert from error_code to our own mapping
-             client_connect_cb(self->host, self->port, 1);
+             client_connect_cb(host, 1);
           });
      });
 }
 
+#if 0
 void Client::do_GET_request(shared_ptr<Handle> handle, const string & uri, Buffer req,
-                        query_request_callback request_cb) 
+                        response_receive_callback resp_cb) 
 {
     string url("http://"+host+":" + port + uri);
     auto self = shared_from_this();
@@ -57,7 +45,7 @@ void Client::do_GET_request(shared_ptr<Handle> handle, const string & uri, Buffe
                 Buffer * buffer(new Buffer());
                 res.on_data([handle, res_code, buffer, request_cb](const uint8_t * data, size_t len) {
                     if (len == 0) {
-                    request_cb(handle, res_code, buffer);
+                    res_cb(handle, res_code, buffer);
                     }
                     });
                 });
@@ -68,3 +56,4 @@ void Client::do_GET_request(shared_ptr<Handle> handle, const string & uri, Buffe
                 });
             });
 }
+#endif

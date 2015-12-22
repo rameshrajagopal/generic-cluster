@@ -1,31 +1,41 @@
-#ifndef __HTTP2_CLIENT_H_INCLUDED__
-#define __HTTP2_CLIENT_H_INCLUDED__
+#ifndef __CLIENT_H_INCLUDED__
+#define __CLIENT_H_INCLUDED__
 
 #include <nghttp2/asio_http2_client.h>
+#include <request_meta.h>
+#include <buffer.h>
 #include <memory>
 #include <thread>
+#include <host_info.h>
 
 using boost::asio::ip::tcp;
 using namespace nghttp2::asio_http2;
 using namespace nghttp2::asio_http2::client;
+using namespace std;
 
-using session_connect_cb = std::function<void (const HostInfo & host, int res_code)>;
-using response_dispatch_cb = std::function<void (shared_ptr<Handle> handle, int res_code, Buffer && response)>;
+using session_connect_cb = std::function<void (const HostInfo & host, int ec)>;
+using response_receive_callback = 
+          std::function<void (shared_ptr<Handle> handle, int res_code, unique_ptr<Buffer<uint8_t>> response)>;
 
 /* make sure io_service is waition on some work */
-class Client: public std::enable_shared_from_this<Client> {
-    Client(const HostInfo & host, io_service & ios);
+class Client {
+public:
+    Client(const HostInfo & host, boost::asio::io_service & ios);
     void connect(session_connect_cb sess_connect_cb);
     int do_GET_request(shared_ptr<Handle> handle, const string & uri, 
-                       const Buffer & request, response_dispatch_cb cb);
+                       std::unique_ptr<Buffer<uint8_t>> & req, response_receive_callback cb);
     int do_POST_request(shared_ptr<Handle> handle, const string & uri,
-                       const Buffer & request, response_dispatch_cb cb);
+                       std::unique_ptr<Buffer<uint8_t>> & req, response_receive_callback cb);
+    ~Client() {
+       cout << "Destructor called" << endl;
+       req_map.clear();
+    }
 private:
    HostInfo host;
    boost::asio::io_service & ios;
    shared_ptr<session> sess;
    std::atomic<uint64_t> id {0};
-   std::map<uint64_t, RequestMap> req_map;
+   std::map<uint64_t, RequestMeta> req_map;
 };
 
-#endif /*__HTTP2_CLIENT_H_INCLUDED__*/
+#endif /*__CLIENT_H_INCLUDED__*/

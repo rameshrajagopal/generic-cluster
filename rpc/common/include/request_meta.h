@@ -13,6 +13,7 @@ public:
    void update_request(uint8_t * buf, size_t len);
    void update_response(uint8_t * buf, size_t len);
    void get_request(unique_ptr<Buffer<uint8_t>> & u_req);
+   void get_response(unique_ptr<Buffer<uint8_t>> & u_res);
    void send_response(int res_code, const header_map & h);
 private:
    shared_ptr<IOStream> stream;

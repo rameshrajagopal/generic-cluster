@@ -19,6 +19,13 @@ void RequestMeta::get_request(unique_ptr<Buffer<uint8_t>> & u_req)
     u_req = std::move(req);
     req = nullptr;
 }
+
+void RequestMeta::get_response(unique_ptr<Buffer<uint8_t>> & u_res)
+{
+    u_res = std::move(res);
+    res = nullptr;
+}
+
 void RequestMeta::send_response(int res_code, const header_map & h)  
 {
      stream->send_response(res_code, h, std::move(res));
