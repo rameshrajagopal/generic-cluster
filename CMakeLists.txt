@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.4)
 
 # where to find cmake modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 #----------------------------------------------------------
 # Project
@@ -38,9 +38,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11 -lpthread")
 #set(LRUCACHE_DIR ${EXTERNAL_PROJECTS_DIR}/lru-cache)
 
 set(PROJECT_TOP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR})
 set(PROJECT_QUERY_CONTROLLER_DIR ${PROJECT_SOURCE_DIR}/query_controller)
 set(PROJECT_UTILS_DIR ${PROJECT_SOURCE_DIR}/utils)
 set(PROJECT_CLUSTER_DIR ${PROJECT_SOURCE_DIR}/cluster)
+set(PROJECT_RPC_DIR ${PROJECT_SOURCE_DIR}/rpc)
 #set(SHERLOCK_TYPES_DIR ${PROJECT_SOURCE_DIR}/thrift)
 #set(DATA_DIR ${PROJECT_SOURCE_DIR}/data)
 #set(STORAGE_ENGINE_DIR ${PROJECT_SOURCE_DIR}/storage_engine)
@@ -51,7 +53,8 @@ set(PROJECT_CLUSTER_DIR ${PROJECT_SOURCE_DIR}/cluster)
 
 #add_subdirectory(${PROJECT_COMMON_DIR})
 #add_subdirectory(${PROJECT_QUERY_CONTROLLER_DIR})
-add_subdirectory(${PROJECT_CLUSTER_DIR})
+#add_subdirectory(${PROJECT_CLUSTER_DIR})
+add_subdirectory(${PROJECT_RPC_DIR})
 #add_subdirectory(${PROJECT_UTILS_DIR})
 #add_subdirectory(${SHERLOCK_TYPES_DIR})
 #add_subdirectory(${DATA_DIR})

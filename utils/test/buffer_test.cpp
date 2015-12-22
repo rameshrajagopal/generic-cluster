@@ -294,6 +294,17 @@ TEST(BufferTest, bufferMoveTest) {
     EXPECT_EQ(move_buf->get_num_buffers(), num_buffers);
 }
 
+TEST(BufferTest, bufferPutWithBigBufferTest) {
+    int buf_size = 2048;
+    Buffer<uint8_t> buffer(buf_size);
 
+    size_t size = 8 * 1024;
+    unique_ptr<uint8_t> source (new uint8_t[size]);
+    memset(source.get(), 'a', size);
+
+    buffer.put(source.get(), size);
+    /* try to copy the data */
+    EXPECT_EQ(buffer.get_num_buffers(), 4);
+}
 
 

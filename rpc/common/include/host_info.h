@@ -16,8 +16,8 @@ typedef enum {
 }HostType;
 
 struct HostInfo {
-    string name;
-    string ip;
+    std::string name;
+    std::string ip;
     int port;
 };
 

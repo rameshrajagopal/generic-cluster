@@ -16,6 +16,9 @@ public:
 
       ~Buffer() 
       {
+          for (auto buf: buffers) {
+              delete[] buf;
+          }
       }
       /* copy of the buffer type is deleted */
       Buffer(const Buffer &) = delete;
@@ -52,19 +55,25 @@ public:
           return copied;
       }
 
-      void put(BufferType * buf, size_t len) 
+      void put(BufferType * buf, ssize_t len) 
       {
-          size_t idx = buffers.size()-1;
-          size_t rem = size - w_offset;
-          if (rem < len) {
-             memcpy((BufferType *)buffers[idx], buf, rem); 
-             BufferType * tmpbuf = allocate(size);
-             w_offset = len-rem;
-             memcpy((BufferType *)tmpbuf, buf+rem, w_offset);
-             buffers.push_back(tmpbuf);
-          } else {
-              memcpy((BufferType *)buffers[idx]+ w_offset, buf, len);
-              w_offset += len;
+          ssize_t idx = buffers.size()-1;
+          ssize_t rem = 0;
+          ssize_t stored = 0;
+          while (len > 0) {
+              if (w_offset == size) {
+                  BufferType * tmpbuf = allocate(size);
+                  buffers.push_back(tmpbuf);
+                  w_offset = 0;
+                  ++idx;
+              }
+              rem = size - w_offset;
+              rem = (rem <= len) ? (rem): (len);
+              /* copy the remaining bytes */
+              memcpy((BufferType *)buffers[idx] + w_offset, buf + stored, rem); 
+              w_offset += rem;
+              stored += rem;
+              len -= rem;
           }
       }
 
