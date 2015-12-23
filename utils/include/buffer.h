@@ -55,7 +55,7 @@ public:
           return copied;
       }
 
-      void put(BufferType * buf, ssize_t len) 
+      void put(const BufferType * buf, ssize_t len) 
       {
           ssize_t idx = buffers.size()-1;
           ssize_t rem = 0;

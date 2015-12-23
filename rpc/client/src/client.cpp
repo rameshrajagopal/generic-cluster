@@ -27,16 +27,28 @@ void Client::connect(session_connect_cb client_connect_cb)
 }
 
 #if 0
-void Client::do_GET_request(shared_ptr<Handle> handle, const string & uri, Buffer req,
-                        response_receive_callback resp_cb) 
+/*
+ * cases to handle 
+ * 1) what happens after posted the callback, session got a disconnect error ?
+ * 2) node monitor detected that slave is down ? it may be network blip or
+ * proper shutdown how do you handle it ?
+ * 3) in case of proper slave crash, the host_session has to clear up all
+ * entries how do we do that 
+ * 4) how do we protect "self" becoming invalid 
+ * -> variables to look for "self", "self->sess", "handle", "self->req_map" is
+ *  there anything ?
+ * 5) How do we test all these scenarios
+ */
+void Client::do_GET_request(shared_ptr<Handle> handle, const string & path, shared_ptr<Buffer<uint8_t>> req, 
+                            response_receive_callback resp_cb) 
 {
-    string url("http://"+host+":" + port + uri);
-    auto self = shared_from_this();
+    auto self  = shared_from_this();
+    string url = get_url(uri);
     ios.post(
             [self, handle, url, req, request_cb]() {
             boost::system::error_code ec;
-            string actual(req);
-            auto req = self->sess->submit(ec, "GET", url, actual);
+            auto req = self->sess->submit(ec, "GET", url, [req]() 
+            );
             uint64_t rid = ++self->id;
             self->req_map.insert(std::pair<uint64_t, RequestMap>(self->id, req));
             req->on_response(

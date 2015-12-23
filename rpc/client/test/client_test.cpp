@@ -44,9 +44,10 @@ TEST(ClientTest, clientConnectSessionErrorTest) {
       std::unique_lock<std::mutex> mlock(_mutex);
       _cond.wait_for(mlock, std::chrono::seconds(2), [&got_response](){return got_response == true;});
       EXPECT_EQ(connected, false);
+      io_service.stop();
 }
 
-TEST(ClientTest, clientConnectSessionConnectTest {
+TEST(ClientTest, clientConnectSessionConnectTest) {
     /* start a io service */
     boost::asio::io_service io_service;
     boost::asio::io_service::work work(io_service);
@@ -57,6 +58,10 @@ TEST(ClientTest, clientConnectSessionConnectTest {
         cout << "io service exit" << endl;
     });
     io_thread.detach();
+    /*
+     * start the mock_server 
+     */
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     /* for sync b/w callback and this thread */
     std::mutex _mutex;
     std::condition_variable _cond;
@@ -83,5 +88,7 @@ TEST(ClientTest, clientConnectSessionConnectTest {
       });
       std::unique_lock<std::mutex> mlock(_mutex);
       _cond.wait_for(mlock, std::chrono::seconds(2), [&got_response](){return got_response == true;});
-      EXPECT_EQ(connected, false);
+      EXPECT_EQ(connected, true);
+      io_service.stop();
 }
+

@@ -3,6 +3,8 @@
 
 CWD=$1
 BUILD_DIR=$CWD/build/
+ROOT_DIR=$CWD
+export ROOT_DIR
 
 cd ${BUILD_DIR}
 ctest -VV --timeout 120
