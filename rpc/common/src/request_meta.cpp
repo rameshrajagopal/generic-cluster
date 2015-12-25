@@ -5,11 +5,11 @@ RequestMeta:: RequestMeta(shared_ptr<IOStream> s, size_t buf_size):
        res(new Buffer<uint8_t>(buf_size)),
        req(new Buffer<uint8_t>(buf_size)) {}
 
-void RequestMeta::update_request(uint8_t * buf, size_t len) 
+void RequestMeta::update_request(const uint8_t * buf, size_t len) 
 {
     if (req != nullptr) req->put(buf, len);
 }
-void RequestMeta::update_response(uint8_t * buf, size_t len)
+void RequestMeta::update_response(const uint8_t * buf, size_t len)
 {
    if (res != nullptr) res->put(buf, len);
 }

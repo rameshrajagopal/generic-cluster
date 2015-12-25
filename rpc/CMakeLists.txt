@@ -127,3 +127,56 @@ target_include_directories(${RPC_TEST_NAME} PUBLIC
 
 target_link_libraries(${RPC_TEST_NAME} ${GTEST_BOTH_LIBRARIES} rpc_client ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})
 
+#----------------------------------------------------------
+# Server
+#----------------------------------------------------------
+set(PROJECT_NAME rpc_server)
+project(${PROJECT_NAME})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -g -O2")
+
+include_directories(${PROJECT_TOP_INCLUDE_DIR}/include)
+include_directories(${PROJECT_ROOT_DIR}/utils/include)
+include_directories(${PROJECT_SOURCE_DIR}/server/include)
+
+SET(SERVER_INCLUDE_DIRS 
+    ${Nghttp2_INCLUDE_DIR}/nghttp2
+    )
+
+set(RPC_SERVER_LIB_NAME rpc_server)
+FILE(GLOB RPC_SERVER_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/server/src/*.cpp
+)
+
+add_library(${RPC_SERVER_LIB_NAME} ${RPC_SERVER_SOURCE_FILES})
+SET(CLUSTER_SERVER_LIB_NAME ${PROJECT_SOURCE_DIR}/server/include)
+
+target_include_directories(${RPC_SERVER_LIB_NAME} PUBLIC ${SERVER_INCLUDE_DIRS})
+target_link_libraries(${RPC_SERVER_LIB_NAME} curl ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})
+
+#----------------------------------------------------------
+# Common top level test
+#----------------------------------------------------------
+enable_testing()
+
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+set(RPC_TEST_NAME ${PROJECT_NAME}_test.out)
+
+include_directories(${GOOGLETEST_DIR}/include)
+include_directories(${PROJECT_ROOT_DIR}/utils/include)
+include_directories(${PROJECT_SOURCE_DIR}/server/include)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/server/test/*.cpp)
+
+add_executable(${RPC_TEST_NAME} ${TEST_SRC_FILES})
+add_test(NAME ${RPC_TEST_NAME} COMMAND ${RPC_TEST_NAME})
+
+target_include_directories(${RPC_TEST_NAME} PUBLIC
+    ${GOOGLETEST_DIR}/include
+    ${PROJECT_SOURCE_DIR}/test
+    ${SERVER_INCLUDE_DIRS}
+)
+
+target_link_libraries(${RPC_TEST_NAME} ${GTEST_BOTH_LIBRARIES} rpc_server rpc_common ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})
