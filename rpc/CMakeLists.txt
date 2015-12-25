@@ -28,7 +28,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -g -O2")
 include_directories(${PROJECT_TOP_INCLUDE_DIR}/include)
 include_directories(${PROJECT_ROOT_DIR}/utils/include)
 include_directories(${PROJECT_SOURCE_DIR}/common/include)
-include_directories(${PROJECT_SOURCE_DIR}/common/include)
 
 SET(COMMON_INCLUDE_DIRS 
     ${Nghttp2_INCLUDE_DIR}/nghttp2
@@ -40,7 +39,6 @@ FILE(GLOB RPC_COMMON_SOURCE_FILES
 )
 
 add_library(${RPC_COMMON_LIB_NAME} ${RPC_COMMON_SOURCE_FILES})
-SET(CLUSTER_COMMON_LIB_NAME ${PROJECT_SOURCE_DIR}/common/include)
 
 target_include_directories(${RPC_COMMON_LIB_NAME} PUBLIC ${COMMON_INCLUDE_DIRS})
 target_link_libraries(${RPC_COMMON_LIB_NAME} curl ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})

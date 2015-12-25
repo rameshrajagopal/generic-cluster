@@ -7,7 +7,7 @@
 #include <atomic>
 
 TEST(RequestControllerTest, createReqControllerBasicTest) {
-    int req_num = 10;
+    //int req_num = 10;
     int req_size = 1024;
     int res_size = 512;
     uint8_t req_source[req_size];
@@ -25,7 +25,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
           uint8_t * req_buf = nullptr;
           int size = req->get(req_buf); 
           cout << "received request ";
-          cout << static_cast<int *>(handle.get());
+          cout << static_cast<void *>(handle.get());
           cout << size << " " << static_cast<void *>(h.get()) << endl;
           EXPECT_EQ(size, req_size);
           EXPECT_EQ(memcmp(req_buf, req_source, req_size), 0);
@@ -39,7 +39,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
              uint8_t * res_buf = nullptr;
              cout << "received response: ";
              int size = res->get(res_buf);
-             cout << static_cast<int *>(handle.get()) << endl;
+             cout << static_cast<void *>(handle.get()) << endl;
              EXPECT_EQ(size, res_size);
              EXPECT_EQ(res_code, 200);
              EXPECT_EQ(memcmp(res_buf, res_source, res_size), 0);
@@ -49,7 +49,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
     RequestController req_controller(request_cb, response_cb);
     req_controller.start(1);
     /* produce the request */
-    shared_ptr<Handle> handle = make_shared<Handle>(req_num);
+    shared_ptr<Handle> handle;
     /* create a request buffer */
     unique_ptr<Buffer<uint8_t>> req(new Buffer<uint8_t>(req_size));
     req->put(req_source, sizeof(req_source));
