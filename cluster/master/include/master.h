@@ -7,7 +7,7 @@
 
 class Master {
 public:
-    Master(const HostInfo & master, vector<HostInfo> & slaves);
+    Master(const HostInfo & master, const vector<HostInfo> & slaves);
     void init();
     void slave_register(const HostInfo & slave);
     void slave_set_state(const HostInfo & slave, Status status);
@@ -16,9 +16,11 @@ public:
     void peer_set_state(const HostInfo & peer, Status status);
     bool get_status(); 
     void submit_response(shared_ptr<Handle> handle, int res_code, Buffer & response);
-    void submit_slave_request(shared_ptr<Handle> handle, const string & uri, const Buffer & request, response_dispatch_cb res_cb);
+    void submit_slave_request(shared_ptr<Handle> handle, const string & uri, 
+                              const Buffer & request, response_dispatch_cb res_cb);
     void host_monitor_cb(const HostInfo & host, Status status);
-    void register_request_cb(shared_ptr<Handle> handle, shared_ptr<Buffer> request, const HeaderMap &h);
+    void register_request_cb(shared_ptr<Handle> handle, shared_ptr<Buffer> request, 
+                             const HeaderMap &h);
 private:
     Server server;
     vector<HostSession> slave_sessions;
