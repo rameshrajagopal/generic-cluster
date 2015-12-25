@@ -1,4 +1,4 @@
-#include "../../include/query_controller.h"
+#include <request_controller.h>
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
@@ -28,7 +28,7 @@ public:
                 /*
                  * create a request and send it to req controller 
                  */
-                   shared_ptr<Handle> handle = make_shared<Handle>(req_num);
+                   shared_ptr<Handle> handle;
                    unique_ptr<Buffer<uint8_t>> req(new Buffer<uint8_t>(2048));
                    uint8_t req_source[2048] = "Producer";
                    cout << "Producer:req->";
@@ -50,7 +50,6 @@ public:
 private:
    std::atomic<uint64_t> req_num {0};
    std::atomic<bool> is_alive {false};
-   //vector<EpHandler> handlers;
    request_dispatch_cb req_cb;
 };
 
@@ -58,7 +57,7 @@ class Consumer {
 public:
     void consume_request(shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> req, unique_ptr<HeaderMap> h)
     {
-        cout << "Consumer:Request-> " << *static_cast<int *>(handle.get()) << " " << static_cast<void *>(h.get());
+        cout << "Consumer:Request-> " << static_cast<void *>(handle.get()) << " " << static_cast<void *>(h.get());
         uint8_t * req_buf;
         size_t ret_len = 0;
         while ((ret_len = req->get(req_buf)) != 0) {
@@ -67,7 +66,7 @@ public:
     }
     void consume_response(shared_ptr<Handle> handle, int res_code, unique_ptr<Buffer<uint8_t>> res)
     {
-        cout << "Consumer:Response-> " << *static_cast<int *>(handle.get()) << " rescode " << res_code << endl;
+        cout << "Consumer:Response-> " << static_cast<void *>(handle.get()) << " rescode " << res_code << endl;
         uint8_t * res_buf;
         size_t ret_len = 0;
         while ((ret_len = res->get(res_buf)) != 0) {
@@ -82,7 +81,7 @@ public:
     DummyMaster(): 
         req_controller(std::bind(&DummyMaster::req_process_cb, this, _1, _2, _3), 
             std::bind(&DummyMaster::res_process_cb, this, _1, _2, _3)),
-        producer(std::bind(&RequestController::request_receive_cb, &req_controller, _1, _2, _3)) {}
+        producer(std::bind(&DummyMaster::request_receive_cb, this, _1, _2, _3)) {}
     void start(int num_producers, int num_consumers)
     {
         req_controller.start(num_consumers);
@@ -98,6 +97,10 @@ public:
     {
         consumer.consume_response(handle, res_code, std::move(res));
     };
+    void request_receive_cb(shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> req, unique_ptr<HeaderMap> h)
+    {
+        req_controller.put_request(handle, std::move(req), std::move(h));
+    }
     void stop() 
     {
         producer.stop();

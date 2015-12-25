@@ -1,22 +1,11 @@
-#ifndef _QUERY_CONTROLLER_H_INCLUDED__
-#define _QUERY_CONTROLLER_H_INCLUDED__
+#ifndef _REQUEST_CONTROLLER_H_INCLUDED__
+#define _REQUEST_CONTROLLER_H_INCLUDED__
 
 #include <common_types.h>
+#include <request_meta.h>
 #include <buffer.h>
 #include <queue.h>
 #include <atomic>
-
-struct RequestMetaMock {
-    int id;
-};
-struct HeaderValueMock {
-    std::string value;
-    bool sensitive;
-};
-//using Handle = RequestMetaMock;
-//using HeaderMap = std::map<std::string, HeaderValueMock>;
-using Handle = int;
-using HeaderMap = int;
 
 using request_process_cb = std::function<
             int (shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> request, unique_ptr<HeaderMap> h)>;
@@ -52,10 +41,9 @@ class RequestController {
 public:
     RequestController(request_process_cb req_cb, response_process_cb res_cb);
     void start(int num_threads);
-    void request_receive_cb(shared_ptr<Handle> handle, 
-                            unique_ptr<Buffer<uint8_t>> request, unique_ptr<HeaderMap> h);
-    void response_receive_cb(shared_ptr<Handle> handle, int res_code, 
-                            unique_ptr<Buffer<uint8_t>> response);
+    void put_request(shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> req, 
+                     unique_ptr<HeaderMap> h);
+    void put_response(shared_ptr<Handle> handle, int res_code, unique_ptr<Buffer<uint8_t>> res);
 private:
    Queue<unique_ptr<Request>>  request_q;
    Queue<unique_ptr<Response>> response_q;
@@ -64,4 +52,4 @@ private:
    std::atomic<bool> is_alive {false};
 };
 
-#endif /*_QUERY_CONTROLLER_H_INCLUDED__*/
+#endif /*_REQUEST_CONTROLLER_H_INCLUDED__*/

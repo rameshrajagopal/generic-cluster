@@ -30,7 +30,7 @@ class Queue
     {
       cond_.wait(mlock);
     }
-    item = queue_.front();
+    item = std::move(queue_.front());
     queue_.pop();
     mlock.unlock();
   }

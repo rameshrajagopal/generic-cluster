@@ -1,4 +1,4 @@
-#include <query_controller.h>
+#include <request_controller.h>
 
 RequestController::RequestController(request_process_cb req_cb, response_process_cb res_cb):
                  request_cb(req_cb), response_cb(res_cb), is_alive(true) {}
@@ -19,7 +19,8 @@ void RequestController::start(int num_threads)
            }
         );
         request_processor.detach();
-        std::thread response_processor(
+     }
+     std::thread response_processor(
            [this]() {
               while (is_alive) {
                  unique_ptr<Response> res; // = std::move(self->response_q.pop());
@@ -29,22 +30,21 @@ void RequestController::start(int num_threads)
                  }
               }
            }
-        );
-        response_processor.detach();
-    }
+     );
+    response_processor.detach();
 }
 
-void RequestController::
-     request_receive_cb(shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> request, 
-                                       unique_ptr<HeaderMap> h)
+void RequestController::put_request(shared_ptr<Handle> handle, 
+                                    unique_ptr<Buffer<uint8_t>> request, 
+                                    unique_ptr<HeaderMap> h)
 {
     unique_ptr<Request> req (new Request(handle, std::move(request), std::move(h)));
     cout << "ReqController:req->";
     request_q.push(std::move(req));
 }
 
-void RequestController::
-     response_receive_cb(shared_ptr<Handle> handle, int res_code, unique_ptr<Buffer<uint8_t>> response)
+void RequestController::put_response(shared_ptr<Handle> handle, int res_code, 
+                                     unique_ptr<Buffer<uint8_t>> response)
 {
     unique_ptr<Response> res (new Response(handle, res_code, std::move(response)));
     cout << "ReqController:Response";

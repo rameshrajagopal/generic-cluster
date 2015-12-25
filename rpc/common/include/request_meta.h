@@ -22,5 +22,6 @@ private:
    uint64_t rand_id {0};
 };
 using Handle = RequestMeta;
+using HeaderMap = header_map;
 
 #endif /*__RPC_UTILS_H_INCLUDED__*/

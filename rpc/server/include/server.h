@@ -8,7 +8,6 @@
 #include <host_info.h>
 #include <request_meta.h>
 #include <buffer.h>
-using HeaderMap = header_map;
 using namespace std;
 using namespace nghttp2::asio_http2;
 using namespace nghttp2::asio_http2::server;

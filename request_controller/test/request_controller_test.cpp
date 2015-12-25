@@ -1,7 +1,7 @@
 #define GTEST_HAS_TR1_TUPLE 0
 #include "gtest/gtest.h"
 
-#include "../include/query_controller.h"
+#include "../include/request_controller.h"
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
@@ -55,7 +55,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
     req->put(req_source, sizeof(req_source));
     /* create a headmer map */
     unique_ptr<HeaderMap> h(new HeaderMap());
-    req_controller.request_receive_cb(handle, std::move(req), std::move(h));
+    req_controller.put_request(handle, std::move(req), std::move(h));
     /* request received in callback now send the response */
     std::unique_lock<std::mutex> mlock(_mutex);
     while(!has_request_come) {
@@ -65,7 +65,7 @@ TEST(RequestControllerTest, createReqControllerBasicTest) {
     /* send the response to the client */
     unique_ptr<Buffer<uint8_t>> res(new Buffer<uint8_t>(res_size));
     res->put(res_source, res_size);
-    req_controller.response_receive_cb(handle, 200, std::move(res));
+    req_controller.put_response(handle, 200, std::move(res));
     /* wait till response come */
     mlock.lock();
     while(!has_result_come) {
