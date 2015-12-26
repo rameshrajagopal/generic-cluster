@@ -20,19 +20,19 @@ struct HostInfo {
     HostInfo(std::string name, std::string ip, std::string port):
         name(name), ip(ip), port(port), status(Status::INVALID), available(false){}
 
-    Status get_status() { return status; }
+    Status get_status() const { return status; }
 
-    void set_status(Status status) { status = status; }
+    void set_status(const Status & s) { status = s; }
 
-    bool is_available() { return available; }
+    bool is_available() const { return available; }
 
     void set_available(bool avail) { available = avail; }
 
-    string get_name() { return name; }
+    string get_name() const { return name; }
 
-    string get_ip() { return ip; }
+    string get_ip() const { return ip; }
 
-    string get_port() { return port;}
+    string get_port() const { return port;}
 
     std::string name;
     std::string ip;

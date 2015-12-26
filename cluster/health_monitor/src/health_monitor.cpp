@@ -78,56 +78,70 @@ public:
 
 HealthMonitor::HealthMonitor(const vector<HostInfo> & hosts, 
                              uint32_t timeout, 
-                             health_monitor_cb hm_cb)
+                             health_monitor_cb hm_cb): 
+                             timeout(timeout), wakeup(false), is_alive(true)
 {
     for (auto & host: hosts) {
-        HostInfo h(host.name, host.ip, host.port);
-        hostmap[host.name] = h;
+
+        unique_ptr<HostInfo> h (new HostInfo(host.name, host.ip, host.port));
+        hostmap[host.name] = std::move(h);
     }
-    is_alive = true;
-    timeout = timeout;
     listeners.push_back(hm_cb);
 }
 
 void HealthMonitor::add(const HostInfo & host)
 {
+    std::unique_lock<std::mutex> mlock(_mutex);
     if (hostmap.find(host.name) != hostmap.end()) {
         cout << "Already found" << endl;
-        HostInfo & h = hostmap[host.name];
-        h.set_available(true);
+        auto & h = hostmap[host.name];
+        h->set_available(true);
     } else {
         cout << "Inserting here " << endl;
-        HostInfo h(host.name, host.ip, host.port);
-        h.set_available(true);
-        hostmap[host.name] = h;
+        unique_ptr<HostInfo> h ( new HostInfo(host.name, host.ip, host.port));
+        h->set_available(true);
+        hostmap[host.name] = std::move(h);
     }
+    mlock.unlock();
 }
 
-void HealthMonitor::remove(const HostInfo & host) 
+int HealthMonitor::remove(const HostInfo & host)
 {
+    int ret = -1;
+    std::unique_lock<std::mutex> mlock(_mutex);
     if (hostmap.find(host.name) != hostmap.end()) {
-        cout << "Already found" << endl;
-        HostInfo & h = hostmap[host.name];
-        h.set_available(false);
+        auto & h = hostmap[host.name];
+        h->set_available(false);
+        ret = 0;
     }
+    mlock.unlock();
+    return ret;
+}
+
+void HealthMonitor::register_listener(health_monitor_cb cb)
+{
+    std::unique_lock<std::mutex> mlock(_mutex);
+    listeners.push_back(cb);
+    mlock.unlock();
 }
 
 void HealthMonitor::start()
 {
     std::thread monitor_thread([this]()
     {
-        cout << "monitor_thread started " << is_alive << endl;
+        cout << "monitor_thread started " << is_alive <<  " " << timeout << endl;
         while (is_alive) {
-           map<string, HostInfo>::const_iterator it = hostmap.begin();
-           for(; it != hostmap.end(); ++it) {
-              HostInfo host = it->second;
-              cout << host.get_name() << " " << host.is_available() << endl;
-              if (host.is_available()) {
-                bool status = Pinger::is_alive(host.get_name().c_str(), 
-                                              atoi(host.get_port().c_str()));
+           std::unique_lock<std::mutex> mlock(_mutex);
+           for (auto & e: hostmap) {
+              auto & host = e.second;
+              if (host->is_available()) {
+                bool status = Pinger::is_alive(host->get_name().c_str(), 
+                                              atoi(host->get_port().c_str()));
                 Status cur_status = (status) ? Status::NODE_UP : Status::NODE_DOWN;
-                if (host.get_status() != cur_status) {
-                    host.set_status(cur_status);
+                cout << "@m " << static_cast<int>(host->get_status()) << " " << static_cast<int>(cur_status) << endl;
+                if (host->get_status() != cur_status) {
+                    e.second->set_status(cur_status);
+                    cout << "updated: " << static_cast<int>(e.second->get_status()) << endl;
                     for (auto & listener_cb: listeners) {
                         cout <<"calling cb" << endl;
                         listener_cb(host, cur_status);
@@ -135,20 +149,40 @@ void HealthMonitor::start()
                 }
               }
            }
-           std::unique_lock<std::mutex> mlock(_mutex);
+           cout << "waiting @ monitor thread " <<  timeout << endl;
            _cond.wait_for(mlock, std::chrono::seconds(timeout),
                           [this]() {return wakeup == true;});
            mlock.unlock();
         }
+        cout << "monitor thread is exiting" << endl;
     });
     monitor_thread.detach();
 }
 
-bool HealthMonitor::is_host_up(HostInfo  host)
+void HealthMonitor::wakeup_monitor() 
 {
+    std::unique_lock<std::mutex> mlock(_mutex);
+    wakeup = true;
+    mlock.unlock();
+    _cond.notify_one();
+}
+
+void HealthMonitor::stop()
+{
+    std::unique_lock<std::mutex> mlock(_mutex);
+    wakeup = true;
+    is_alive = false;
+    mlock.unlock();
+    cout << "stopping monitor thread" << endl;
+    _cond.notify_one();
+}
+
+bool HealthMonitor::is_host_up(const HostInfo & host)
+{
+    std::unique_lock<std::mutex> mlock(_mutex); // will be unlocked when we go out of scope
     if (hostmap.find(host.get_name()) != hostmap.end()) {
         auto & h = hostmap[host.name];
-        return (h.get_status() == Status::NODE_UP);
+        return (h->get_status() == Status::NODE_UP);
     }
     return false;
 }
