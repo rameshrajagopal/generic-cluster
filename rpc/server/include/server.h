@@ -5,16 +5,18 @@
 #include <memory>
 #include <nghttp2/asio_http2_server.h>
 
+#include <header_map.h>
 #include <host_info.h>
 #include <request_meta.h>
 #include <buffer.h>
+
 using namespace std;
 using namespace nghttp2::asio_http2;
 using namespace nghttp2::asio_http2::server;
 
 using request_dispatch_cb  = 
       std::function< void (shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> request, 
-                     shared_ptr<HeaderMap> hmap)>;
+                     const shared_ptr<header_map> hmap)>;
 struct EpHandler{
     EpHandler(const std::string & path, request_dispatch_cb cb): 
          path(path), req_cb(cb) {}

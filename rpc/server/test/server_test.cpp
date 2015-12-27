@@ -7,8 +7,8 @@
 
 using namespace std;
 void req_data_callback(const shared_ptr<RequestMeta> & req_meta, 
-                              const shared_ptr<header_map> & hmap,
-                              request_dispatch_cb req_cb, const uint8_t * data, size_t len);
+                       const shared_ptr<header_map> & hmap,
+                       request_dispatch_cb req_cb, const uint8_t * data, size_t len);
 
 TEST(ServerTest, reqDataCbTest) {
     request req;
@@ -21,7 +21,8 @@ TEST(ServerTest, reqDataCbTest) {
     int i = 0, num_buffers = 4;
     memset(source, 'c', sizeof(source));
     request_dispatch_cb my_callback = [num_buffers]
-    (shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> req, shared_ptr<HeaderMap> hmap) {
+    (const shared_ptr<Handle> handle, unique_ptr<Buffer<uint8_t>> req, 
+            const shared_ptr<header_map> hmap) {
         int i = 0;
         uint8_t * buf;
         while (req->get(buf) != 0) {

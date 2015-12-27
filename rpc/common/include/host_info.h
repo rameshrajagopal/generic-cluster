@@ -28,11 +28,11 @@ struct HostInfo {
 
     void set_available(bool avail) { available = avail; }
 
-    string get_name() const { return name; }
+    std::string get_name() const { return name; }
 
-    string get_ip() const { return ip; }
+    std::string get_ip() const { return ip; }
 
-    string get_port() const { return port;}
+    std::string get_port() const { return port;}
 
     std::string name;
     std::string ip;

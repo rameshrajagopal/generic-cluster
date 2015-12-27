@@ -1,27 +1,23 @@
-#ifndef __RPC_UTILS_H_INCLUDED__
-#define __RPC_UTILS_H_INCLUDED__
+#ifndef __REQUEST_META_H_INCLUDED__
+#define __REQUEST_META_H_INCLUDED__
 
-#include <nghttp2/asio_http2.h>
+#include <meta_data.h>
 #include <io_stream.h>
-#include <buffer.h>
 
-using namespace std;
-
-class RequestMeta {
+class RequestMeta : public MetaData {
 public:
-   RequestMeta(shared_ptr<IOStream> s, size_t buf_size);
-   void update_request(const uint8_t * buf, size_t len);
-   void update_response(const uint8_t * buf, size_t len);
-   void get_request(unique_ptr<Buffer<uint8_t>> & u_req);
-   void get_response(unique_ptr<Buffer<uint8_t>> & u_res);
-   void send_response(int res_code, const header_map & h);
+   RequestMeta(size_t buf_size): MetaData(buf_size) {}
+   RequestMeta(shared_ptr<IOStream> s, size_t buf_size):
+            MetaData(buf_size), stream(s) {}       
+   void send_response(int res_code, const header_map & h) {
+       unique_ptr<Buffer<uint8_t>> u_res;
+       get_response(u_res);
+       stream->send_response(res_code, h, std::move(u_res));
+   }
 private:
    shared_ptr<IOStream> stream;
-   unique_ptr<Buffer<uint8_t>> res;
-   unique_ptr<Buffer<uint8_t>> req;
-   uint64_t rand_id {0};
 };
 using Handle = RequestMeta;
-using HeaderMap = header_map;
 
-#endif /*__RPC_UTILS_H_INCLUDED__*/
+
+#endif /*__REQUEST_META_H_INCLUDED__*/

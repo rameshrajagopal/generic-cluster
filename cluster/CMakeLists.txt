@@ -76,4 +76,58 @@ target_include_directories(${HEALTH_MONITOR_TEST_NAME} PUBLIC
 
 target_link_libraries(${HEALTH_MONITOR_TEST_NAME} ${GTEST_BOTH_LIBRARIES} health_monitor ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})
 
+#----------------------------------------------------------
+# Master
+#----------------------------------------------------------
+set(PROJECT_NAME master)
+project(${PROJECT_NAME})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -g -O2")
 
+include_directories(${PROJECT_TOP_INCLUDE_DIR}/include)
+include_directories(${PROJECT_ROOT_DIR}/utils/include)
+include_directories(${PROJECT_ROOT_DIR}/rpc/server/include)
+include_directories(${PROJECT_SOURCE_DIR}/master/include)
+
+SET(COMMON_INCLUDE_DIRS 
+    ${Nghttp2_INCLUDE_DIR}/nghttp2
+    )
+
+set(MASTER_LIB_NAME master)
+FILE(GLOB MASTER_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/master/src/*.cpp
+)
+
+add_library(${MASTER_LIB_NAME} ${MASTER_SOURCE_FILES})
+
+target_include_directories(${MASTER_LIB_NAME} PUBLIC ${COMMON_INCLUDE_DIRS})
+target_link_libraries(${MASTER_LIB_NAME} curl ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})
+
+#----------------------------------------------------------
+# Master top level test
+#----------------------------------------------------------
+enable_testing()
+
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+set(CLUSTER_MASTER_TEST_NAME ${PROJECT_NAME}_test.out)
+
+include_directories(${GOOGLETEST_DIR}/include)
+include_directories(${PROJECT_ROOT_DIR}/include)
+include_directories(${PROJECT_ROOT_DIR}/utils/include)
+include_directories(${PROJECT_ROOT_DIR}/rpc/server/include)
+include_directories(${PROJECT_SOURCE_DIR}/master/include)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/master/test/*.cpp)
+
+add_executable(${CLUSTER_MASTER_TEST_NAME} ${TEST_SRC_FILES})
+add_test(NAME ${CLUSTER_MASTER_TEST_NAME} COMMAND ${CLUSTER_MASTER_TEST_NAME})
+
+target_include_directories(${CLUSTER_MASTER_TEST_NAME} PUBLIC
+    ${GOOGLETEST_DIR}/include
+    ${PROJECT_SOURCE_DIR}/test
+    ${COMMON_INCLUDE_DIRS}
+)
+
+target_link_libraries(${CLUSTER_MASTER_TEST_NAME} ${GTEST_BOTH_LIBRARIES} master ${Nghttp2_STATIC_LIB} ${Nghttp2_Asio_STATIC_LIB} ${Boost_System_STATIC_LIB} ${Crypto_STATIC_LIB} ${Ssl_STATIC_LIB})

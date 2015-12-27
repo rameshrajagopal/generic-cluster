@@ -15,7 +15,8 @@ using namespace std;
 class IOStream: public std::enable_shared_from_this<IOStream> {
 public:
     IOStream(const request & req, const response & res, boost::asio::io_service & ios);
-    void send_response(int res_code, const header_map & h, shared_ptr<Buffer<uint8_t>> response);
+    void send_response(int res_code, const header_map & h, 
+                             std::shared_ptr<Buffer<uint8_t>> response);
     void close(bool f);
 private:
    const request & req; 

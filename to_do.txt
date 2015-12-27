@@ -1,0 +1,8 @@
+1) Convert hard coded values into proper const expressions
+2) Re-check the usage of unique_ptr and shared_ptr
+3) Introduce "using" thing to replace unique_ptr with "up" and "shared_ptr"
+with "sp"
+4) convert "http2" level error code to our level error code
+5) remove multiple places "std"  
+6) introduce "namespace"
+7) verify the path of all pointers
