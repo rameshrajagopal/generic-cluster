@@ -37,8 +37,7 @@ void Client::connect(session_connect_cb client_connect_cb)
  *  there anything ?
  * 5) How do we test all these scenarios
  */
-
-void Client::do_GET_request(shared_ptr<Handle> handle, 
+void Client::do_GET_request(const shared_ptr<Handle> handle, 
                             const string & path, const shared_ptr<HeaderMap> & h, 
                             const shared_ptr<Buffer<uint8_t>> & req, 
                             response_receive_callback resp_cb)

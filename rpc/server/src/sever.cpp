@@ -1,6 +1,5 @@
 #include <server.h>
 
-
 void req_data_callback(const shared_ptr<RequestMeta> & req_meta, 
                        const shared_ptr<header_map> & hmap,
                        request_dispatch_cb req_cb, const uint8_t * data, size_t len)
